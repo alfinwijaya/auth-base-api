@@ -23,7 +23,7 @@ def upgrade() -> None:
     op.create_table('password_reset_tokens',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('user_id', sa.Integer(), nullable=True),
-    sa.Column('token', sa.String(), nullable=True),
+    sa.Column('token', sa.String(length=255), nullable=True),
     sa.Column('expires_at', sa.DateTime(), nullable=True),
     sa.Column('is_used', sa.Boolean(), nullable=True),
     sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),

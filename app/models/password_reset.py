@@ -8,7 +8,7 @@ class PasswordResetToken(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"))
-    token = Column(String, index=True)
+    token = Column(String(255), index=True)
     expires_at = Column(DateTime)
     is_used = Column(Boolean, default=False)
     user = relationship("User")

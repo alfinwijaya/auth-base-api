@@ -18,4 +18,5 @@ def send_reset_notification(email: str, token: str):
         server.send_message(msg)
 
 def send_sms(phone: str, token: str):
+    # Todo: Implement actual SMS sending logic using an SMS gateway API
     print(f"Send SMS to {phone}: {token}")
