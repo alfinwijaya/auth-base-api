@@ -1,34 +1,21 @@
-from sqlalchemy.orm import Session
-from fastapi import HTTPException
-
-from app.crud.user import get_user_by_email, create_user
-from app.utils.hash import verify_password
-from app.core.security import create_access_token, create_refresh_token
-
-from jose import jwt, JWTError
 from app.core.config import settings
-
-
-from sqlalchemy.orm import Session
-from fastapi import HTTPException
-
-from app.crud.user import get_user_by_email, create_user
-from app.crud.role import get_role_by_name
-from app.utils.hash import hash_password, verify_password
 from app.core.security import create_access_token, create_refresh_token
-
+from app.crud.role import get_role_by_name
+from app.crud.user import get_user_by_email, create_user
+from app.utils.hash import hash_password, verify_password
+from fastapi import HTTPException
+from jose import jwt, JWTError
+from sqlalchemy.orm import Session
 
 def register_user(db: Session, email: str, password: str):
     existing = get_user_by_email(db, email)
 
     if existing:
         raise HTTPException(400, "Email already registered")
-
+    
     role = get_role_by_name(db, "user")
-
-    hashed = hash_password(password)
-
-    user = create_user(db, email, hashed, role)
+    
+    user = create_user(db, email, password, role)
 
     return user
 

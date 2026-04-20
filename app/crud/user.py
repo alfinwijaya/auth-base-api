@@ -3,8 +3,9 @@ from app.models.user import User
 from app.utils.hash import hash_password
 from app.models.role import Role
 
-def create_user(db: Session, email: str, password: str, role_name: str = "user"):
-    role = db.query(Role).filter(Role.name == role_name).first()
+def create_user(db: Session, email: str, password: str, role: User | None = None):
+    if not role:
+        role = db.query(Role).filter(Role.name == "user").first()
 
     user = User(
         email=email,

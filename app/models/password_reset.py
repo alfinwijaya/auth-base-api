@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, ForeignKey
 from datetime import datetime, timezone
+from sqlalchemy.orm import relationship
 from app.db.base import Base
-
 
 class PasswordResetToken(Base):
     __tablename__ = "password_reset_tokens"
@@ -11,6 +11,12 @@ class PasswordResetToken(Base):
     token = Column(String, index=True)
     expires_at = Column(DateTime)
     is_used = Column(Boolean, default=False)
+    user = relationship("User")
 
     def is_expired(self):
-        return datetime.now(timezone.utc) > self.expires_at
+        expires = self.expires_at
+        if expires is None:
+            return True
+
+        expires = expires.replace(tzinfo=timezone.utc)
+        return datetime.now(timezone.utc) > expires

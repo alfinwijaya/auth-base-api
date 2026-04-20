@@ -1,18 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
-from jose import jwt, JWTError
 from slowapi.util import get_remote_address
 from slowapi import Limiter
 from app.schemas.user import UserCreate
 from app.schemas.auth import ForgotPasswordRequest, ResetPasswordRequest, Token
-from app.crud.user import create_user, get_user_by_email
-from app.core.security import (
-    create_access_token,
-    create_refresh_token,
-)
-from app.utils.hash import verify_password
 from app.api.deps import get_db
-from app.core.config import settings
 from app.services import auth_service as auth
 from app.schemas.auth import RefreshTokenRequest
 from app.services import password_service
@@ -33,7 +25,6 @@ def login(request: Request, user: UserCreate, db: Session = Depends(get_db)):
 @router.post("/refresh", response_model=Token)
 def refresh_token(data: RefreshTokenRequest):
     return auth.refresh_access_token(data.refresh_token)
-
 
 @router.post("/forgot-password")
 def forgot_password(data: ForgotPasswordRequest, db: Session = Depends(get_db)):

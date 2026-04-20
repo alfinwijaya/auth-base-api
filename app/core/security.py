@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta, timezone
 from jose import jwt
-from fastapi.security import HTTPBearer, OAuth2PasswordBearer
+from fastapi.security import HTTPBearer
 from app.core.config import settings
 
 security = HTTPBearer()
