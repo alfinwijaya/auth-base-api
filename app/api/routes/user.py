@@ -5,7 +5,7 @@ from app.api.deps import get_db, get_current_user, require_role
 from app.schemas.user import UserOut
 from app.services import user_service as user 
 
-router = APIRouter(prefix="/users")
+router = APIRouter(prefix="/users", tags=["Users"])
 
 @router.get("/me", response_model=UserOut)
 def get_me(current_user = Depends(get_current_user)):
