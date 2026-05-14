@@ -15,7 +15,7 @@ limiter = Limiter(key_func=get_remote_address)
 
 @router.post("/register")
 def register(user: UserCreate, db: Session = Depends(get_db)):
-    return auth.register_user(db, user.email, user.password)
+    return auth.register_user(db, user.email, user.password, user.name, user.phone, user.address)
 
 @router.post("/login", response_model=Token)
 @limiter.limit("5/minute")

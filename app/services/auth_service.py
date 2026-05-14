@@ -7,7 +7,7 @@ from fastapi import HTTPException
 from jose import jwt, JWTError
 from sqlalchemy.orm import Session
 
-def register_user(db: Session, email: str, password: str):
+def register_user(db: Session, email: str, password: str, name: str, phone: str = None, address: str = None):
     existing = get_user_by_email(db, email)
 
     if existing:
@@ -15,7 +15,7 @@ def register_user(db: Session, email: str, password: str):
     
     role = get_role_by_name(db, "user")
     
-    user = create_user(db, email, password, role)
+    user = create_user(db, email, password, name, role, phone, address)
 
     return user
 
@@ -28,7 +28,7 @@ def login_user(db: Session, email: str, password: str):
 
     access_token = create_access_token({
         "sub": user.email,
-        "role": user.role.name if user.role else "user"
+        "role": user.role.role_name if user.role else "user"
     })
 
     refresh_token = create_refresh_token({

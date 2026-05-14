@@ -3,13 +3,16 @@ from app.models.user import User
 from app.utils.hash import hash_password
 from app.models.role import Role
 
-def create_user(db: Session, email: str, password: str, role: User | None = None):
+def create_user(db: Session, email: str, password: str, name: str, role: User | None = None, phone: str = None, address: str = None):
     if not role:
-        role = db.query(Role).filter(Role.name == "user").first()
+        role = db.query(Role).filter(Role.role_name == "user").first()
 
     user = User(
         email=email,
         password=hash_password(password),
+        name=name,
+        phone=phone,
+        address=address,
         role=role
     )
 

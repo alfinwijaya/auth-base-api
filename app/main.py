@@ -3,7 +3,7 @@ from fastapi.responses import JSONResponse
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
-from app.api.routes import auth, user
+from app.api.routes import auth, user, role, menu, action, role_permission, audit_log
 from app.db.base import Base
 from app.db.session import engine
 
@@ -31,3 +31,8 @@ async def global_exception_handler(request: Request, exc: Exception):
 
 app.include_router(auth.router)
 app.include_router(user.router)
+app.include_router(role.router, prefix="/roles", tags=["Roles"])
+app.include_router(menu.router, prefix="/menus", tags=["Menus"])
+app.include_router(action.router, prefix="/actions", tags=["Actions"])
+app.include_router(role_permission.router, prefix="/role-permissions", tags=["Role Permissions"])
+app.include_router(audit_log.router, prefix="/audit-logs", tags=["Audit Logs"])

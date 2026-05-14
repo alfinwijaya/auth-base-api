@@ -3,15 +3,13 @@ from sqlalchemy.orm import relationship
 from datetime import datetime, timezone
 from app.db.base import Base
 
-class Role(Base):
-    __tablename__ = "roles"
+class Action(Base):
+    __tablename__ = "actions"
 
     id = Column(Integer, primary_key=True, index=True)
-    role_name = Column(String(100), unique=True, nullable=False)
+    action_name = Column(String(100), unique=True, nullable=False)
     description = Column(String(255), nullable=True)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
-    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
     # Relationships
-    users = relationship("User", back_populates="role")
-    role_permissions = relationship("RolePermission", back_populates="role")
+    role_permissions = relationship("RolePermission", back_populates="action")
