@@ -4,6 +4,7 @@ from slowapi import Limiter
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 from app.api.routes import auth, user, role, menu, action, role_permission, audit_log
+from app.core.logger import logger
 from app.db.base import Base
 from app.db.session import engine
 
@@ -23,6 +24,7 @@ async def rate_limit_handler(request: Request, exc: RateLimitExceeded):
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
+    logger.exception(f"{request.method} {request.url.path} - Unhandled exception")
     return JSONResponse(
         status_code=500,
         content={"message": "Internal server error"}

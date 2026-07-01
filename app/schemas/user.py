@@ -18,6 +18,13 @@ class UserBase(BaseModel):
 class UserCreate(UserBase):
     password: str
 
+class UserRegister(BaseModel):
+    email: EmailStr
+    password: str
+    name: str = Field(..., max_length=255)
+    phone: Optional[str] = Field(None, max_length=20)
+    address: Optional[str] = None
+
 class UserUpdate(BaseModel):
     email: Optional[EmailStr] = None
     name: Optional[str] = Field(None, max_length=255)

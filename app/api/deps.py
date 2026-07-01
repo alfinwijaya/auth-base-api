@@ -2,6 +2,7 @@ from jose import jwt, JWTError
 from fastapi import Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.core.config import settings
+from app.core.logger import logger
 from app.db.session import SessionLocal
 from app.models.user import User
 from fastapi.security import HTTPAuthorizationCredentials
@@ -29,18 +30,23 @@ def get_current_user(
             raise HTTPException(401, "Invalid token")
 
     except JWTError:
+        logger.warning("Invalid token received")
         raise HTTPException(401, "Invalid token")
 
     user = db.query(User).filter(User.email == email).first()
 
     if not user:
+        logger.warning(f"Token valid but user not found: {email}")
         raise HTTPException(401, "User not found")
 
     return user
 
-def require_role(role_names: list[str]):
+def require_role(role_names: str | list[str]):
+    if isinstance(role_names, str):
+        role_names = [role_names]
     def checker(current_user: User = Depends(get_current_user)):
         if not current_user.role or current_user.role.role_name not in role_names:
+            logger.warning(f"Role check failed for user {current_user.email}, required: {role_names}")
             raise HTTPException(403, "Forbidden")
         return current_user
 

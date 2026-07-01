@@ -1,3 +1,4 @@
+from app.core.logger import logger
 from app.crud.user import get_user_by_email
 from app.models.password_reset import PasswordResetToken
 from app.services.notification_service import send_reset_notification
@@ -28,6 +29,7 @@ def request_password_reset(db: Session, email: str):
     db.commit()
 
     send_reset_notification(email, token)
+    logger.info(f"Password reset requested for: {email}")
 
 
 def reset_password(db: Session, token: str, new_password: str):
@@ -36,6 +38,7 @@ def reset_password(db: Session, token: str, new_password: str):
     ).first()
 
     if not record or record.is_used or record.is_expired():
+        logger.warning("Invalid or expired password reset token used")
         raise HTTPException(400, "Invalid or expired token")
 
     user = record.user

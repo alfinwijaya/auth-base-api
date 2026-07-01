@@ -26,3 +26,6 @@ alembic/versions/__pycache__/
 
 uv.lock
 pyproject.toml
+
+.hypothesis
+.kiro

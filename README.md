@@ -8,8 +8,6 @@ A comprehensive FastAPI-based authentication and authorization system with Role-
 
 This codebase has been completely refactored to implement a comprehensive RBAC system. **All existing tables must be dropped and migrations must be run fresh.**
 
-👉 **[GETTING_STARTED.md](GETTING_STARTED.md)** - Start here for quick overview and next steps
-
 ### 📚 Documentation
 
 All documentation is organized in the **[docs/](docs/)** folder:
@@ -89,10 +87,8 @@ auth-base-api/
 ├── validate_rbac.py              # Validation script (NEW)
 ├── QUICK_START.md                # Quick start guide (NEW)
 ├── MIGRATION_GUIDE.md            # Migration instructions (NEW)
-├── MIGRATION_CHECKLIST.md        # Migration checklist (NEW)
 ├── RBAC_IMPLEMENTATION.md        # Implementation details (NEW)
 ├── PERMISSION_GUIDE.md           # Permission guide (NEW)
-├── IMPLEMENTATION_SUMMARY.md     # Summary of changes (NEW)
 ├── requirements.txt
 ├── Dockerfile
 └── docker-compose.yml
@@ -175,7 +171,7 @@ Visit:
 ## 📡 API Endpoints
 
 ### Authentication (`/auth`)
-- `POST /auth/register` - Register new user (requires: email, password, name, role_id)
+- `POST /auth/register` - Register new user (requires: email, password, name)
 - `POST /auth/login` - Login (returns access & refresh tokens)
 - `POST /auth/refresh` - Refresh access token
 - `POST /auth/forgot-password` - Request password reset
@@ -251,7 +247,7 @@ def create_user(
     return create_user_logic(db, user_data)
 ```
 
-See **[PERMISSION_GUIDE.md](PERMISSION_GUIDE.md)** for complete usage guide.
+See **[docs/PERMISSION_GUIDE.md](docs/PERMISSION_GUIDE.md)** for complete usage guide.
 
 ---
 
@@ -272,7 +268,6 @@ See **[PERMISSION_GUIDE.md](PERMISSION_GUIDE.md)** for complete usage guide.
   "email": "user@example.com",
   "password": "password123",
   "name": "John Doe",
-  "role_id": 2,
   "phone": "+1234567890",
   "address": "123 Main St"
 }
@@ -283,6 +278,14 @@ See **[PERMISSION_GUIDE.md](PERMISSION_GUIDE.md)** for complete usage guide.
 
 ### User Response
 Now includes: `name`, `phone`, `address`, `status`, `created_at`, `updated_at`
+
+---
+
+## 🧪 Running Tests
+
+```bash
+pytest tests/ -v
+```
 
 ---
 
@@ -335,7 +338,6 @@ Before production:
 ## 📖 Documentation
 
 For complete documentation, see the **[docs/](docs/)** folder:
-- **[Getting Started](GETTING_STARTED.md)** - Quick overview and next steps
 - **[Quick Start Guide](docs/QUICK_START.md)** - Get started in 10 minutes
 - **[Migration Guide](docs/MIGRATION_GUIDE.md)** - Complete migration instructions
 - **[Permission Guide](docs/PERMISSION_GUIDE.md)** - Permission system reference
@@ -371,4 +373,4 @@ MIT License - Feel free to use this template for your projects.
 
 ---
 
-**Ready to get started?** Check out **[GETTING_STARTED.md](GETTING_STARTED.md)** or jump straight to **[docs/QUICK_START.md](docs/QUICK_START.md)**!
+**Ready to get started?** Jump straight to **[docs/QUICK_START.md](docs/QUICK_START.md)**!
