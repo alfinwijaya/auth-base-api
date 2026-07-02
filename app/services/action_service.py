@@ -3,6 +3,7 @@ from typing import List, Optional
 from app.models.action import Action
 from app.schemas.action import ActionCreate, ActionUpdate
 
+
 class ActionService:
     @staticmethod
     def create_action(db: Session, action_data: ActionCreate) -> Action:
@@ -29,11 +30,8 @@ class ActionService:
         action = db.query(Action).filter(Action.id == action_id).first()
         if not action:
             return None
-        
-        update_data = action_data.model_dump(exclude_unset=True)
-        for key, value in update_data.items():
+        for key, value in action_data.model_dump(exclude_unset=True).items():
             setattr(action, key, value)
-        
         db.commit()
         db.refresh(action)
         return action
@@ -43,7 +41,6 @@ class ActionService:
         action = db.query(Action).filter(Action.id == action_id).first()
         if not action:
             return False
-        
         db.delete(action)
         db.commit()
         return True

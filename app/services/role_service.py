@@ -3,6 +3,7 @@ from typing import List, Optional
 from app.models.role import Role
 from app.schemas.role import RoleCreate, RoleUpdate
 
+
 class RoleService:
     @staticmethod
     def create_role(db: Session, role_data: RoleCreate) -> Role:
@@ -29,11 +30,8 @@ class RoleService:
         role = db.query(Role).filter(Role.id == role_id).first()
         if not role:
             return None
-        
-        update_data = role_data.model_dump(exclude_unset=True)
-        for key, value in update_data.items():
+        for key, value in role_data.model_dump(exclude_unset=True).items():
             setattr(role, key, value)
-        
         db.commit()
         db.refresh(role)
         return role
@@ -43,7 +41,6 @@ class RoleService:
         role = db.query(Role).filter(Role.id == role_id).first()
         if not role:
             return False
-        
         db.delete(role)
         db.commit()
         return True

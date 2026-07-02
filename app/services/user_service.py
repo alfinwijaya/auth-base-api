@@ -3,17 +3,19 @@ from fastapi import HTTPException
 from app.models.user import User
 
 
-def get_all_users_service(db: Session):
-    return db.query(User).all()
+class UserService:
+    @staticmethod
+    def get_all_users(db: Session):
+        return db.query(User).all()
 
+    @staticmethod
+    def delete_user(db: Session, user_id: int):
+        user = db.query(User).get(user_id)
 
-def delete_user_service(db: Session, user_id: int):
-    user = db.query(User).get(user_id)
+        if not user:
+            raise HTTPException(404, "User not found")
 
-    if not user:
-        raise HTTPException(404, "User not found")
+        db.delete(user)
+        db.commit()
 
-    db.delete(user)
-    db.commit()
-
-    return {"message": "deleted"}
+        return {"message": "deleted"}

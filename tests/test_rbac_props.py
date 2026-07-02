@@ -21,7 +21,7 @@ from app.models.role import Role
 from app.models.user import User
 from app.core.security import create_refresh_token
 from app.core.config import settings as app_settings
-from app.services.auth_service import refresh_access_token
+from app.services.auth_service import AuthService
 from jose import jwt
 
 
@@ -90,7 +90,7 @@ def test_refresh_preserves_role_claim(role_name: str):
         refresh_tok = create_refresh_token({"sub": user.email})
 
         # Call the service under test
-        result = refresh_access_token(refresh_tok, db)
+        result = AuthService.refresh_access_token(refresh_tok, db)
 
         # Decode the newly issued access token (skip audience verification)
         payload = jwt.decode(

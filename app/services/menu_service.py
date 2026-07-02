@@ -3,6 +3,7 @@ from typing import List, Optional
 from app.models.menu import Menu
 from app.schemas.menu import MenuCreate, MenuUpdate
 
+
 class MenuService:
     @staticmethod
     def create_menu(db: Session, menu_data: MenuCreate) -> Menu:
@@ -37,11 +38,8 @@ class MenuService:
         menu = db.query(Menu).filter(Menu.id == menu_id).first()
         if not menu:
             return None
-        
-        update_data = menu_data.model_dump(exclude_unset=True)
-        for key, value in update_data.items():
+        for key, value in menu_data.model_dump(exclude_unset=True).items():
             setattr(menu, key, value)
-        
         db.commit()
         db.refresh(menu)
         return menu
@@ -51,7 +49,6 @@ class MenuService:
         menu = db.query(Menu).filter(Menu.id == menu_id).first()
         if not menu:
             return False
-        
         db.delete(menu)
         db.commit()
         return True
