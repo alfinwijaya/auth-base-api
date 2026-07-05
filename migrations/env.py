@@ -6,7 +6,7 @@ from sqlalchemy import pool
 from alembic import context
 from app.db.base import Base
 from app.core.config import settings
-from app.models import user, role, password_reset
+import app.models  # noqa: F401 – registers all models with Base.metadata
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
