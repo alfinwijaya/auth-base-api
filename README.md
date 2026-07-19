@@ -4,91 +4,57 @@ A comprehensive FastAPI-based authentication and authorization system with Role-
 
 ---
 
-## ⚠️ IMPORTANT: RBAC System Implemented
-
-This codebase has been completely refactored to implement a comprehensive RBAC system. **All existing tables must be dropped and migrations must be run fresh.**
-
-### 📚 Documentation
-
-All documentation is organized in the **[docs/](docs/)** folder:
-
-**Essential guides:**
-- **[Quick Start](docs/QUICK_START.md)** - Get up and running in 10 minutes
-- **[Migration Guide](docs/MIGRATION_GUIDE.md)** - Step-by-step migration instructions
-- **[Permission Guide](docs/PERMISSION_GUIDE.md)** - Permission system usage guide
-
-**Complete index:** See **[docs/README.md](docs/README.md)** for all documentation
-
----
-
 ## ✨ Features
 
 ### Authentication & Authorization
-- ✅ JWT access + refresh tokens
-- ✅ Role-based access control (RBAC)
-- ✅ Granular permission system (Role × Menu × Action)
-- ✅ User status management (active, inactive, suspended)
-- ✅ Password reset via token + email
+- **JWT Authentication:** Access and refresh token generation.
+- **Role-Based Access Control (RBAC):** Access restriction mapped to user roles.
+- **Granular Permission Matrix:** 3D access control mapping **Role × Menu × Action**.
+- **User Status Check:** Supports `active`, `inactive`, and `suspended` user states.
+- **Password Reset:** Secure temporary reset token verification.
 
 ### RBAC System
-- ✅ **Hierarchical Menus** - Parent-child menu relationships
-- ✅ **Flexible Actions** - Define custom actions (create, read, update, delete, export, import, etc.)
-- ✅ **Role Permissions** - Fine-grained access control at Role × Menu × Action level
-- ✅ **Audit Logging** - Track all user activities with IP and user agent
-- ✅ **Bulk Operations** - Assign multiple permissions at once
-
-### User Management
-- ✅ Enhanced user profiles (name, phone, address)
-- ✅ User status tracking
-- ✅ Comprehensive user information
-- ✅ Timestamp tracking (created_at, updated_at)
-
-### Technical Features
-- ✅ Alembic migrations
-- ✅ SlowAPI rate limiting
-- ✅ Docker-compose support
-- ✅ Seed data script
-- ✅ Validation script
+- **Hierarchical Menus:** Parent-child menu tree relationships.
+- **Flexible Actions:** Define custom operations (e.g. `create`, `read`, `update`, `delete`).
+- **Audit Logging:** Append-only log capturing user context, IP address, and client details.
+- **Bulk Permission Assignment:** Manage multiple mapping rules in a single transaction.
 
 ---
 
 ## 🗂️ Project Structure
 
-```
+```text
 auth-base-api/
 ├── app/
 │   ├── api/
 │   │   ├── routes/
 │   │   │   ├── auth.py           # Authentication endpoints
 │   │   │   ├── user.py           # User management
-│   │   │   ├── role.py           # Role management (NEW)
-│   │   │   ├── menu.py           # Menu management (NEW)
-│   │   │   ├── action.py         # Action management (NEW)
-│   │   │   ├── role_permission.py # Permission management (NEW)
-│   │   │   └── audit_log.py      # Audit log endpoints (NEW)
+│   │   │   ├── role.py           # Role management
+│   │   │   ├── menu.py           # Menu management
+│   │   │   ├── action.py         # Action management
+│   │   │   ├── role_permission.py # Permission management
+│   │   │   └── audit_log.py      # Audit log endpoints
 │   │   └── deps.py               # Dependencies & middleware
 │   ├── core/                     # Config & security
 │   ├── crud/                     # Database operations
 │   ├── db/                       # Session & base models
 │   ├── models/
-│   │   ├── user.py               # Enhanced user model
-│   │   ├── role.py               # Enhanced role model
-│   │   ├── menu.py               # Menu model (NEW)
-│   │   ├── action.py             # Action model (NEW)
-│   │   ├── role_permission.py    # Permission model (NEW)
-│   │   ├── audit_log.py          # Audit log model (NEW)
+│   │   ├── user.py               # User model
+│   │   ├── role.py               # Role model
+│   │   ├── menu.py               # Menu model
+│   │   ├── action.py             # Action model
+│   │   ├── role_permission.py    # Permission model
+│   │   ├── audit_log.py          # Audit log model
 │   │   └── password_reset.py     # Password reset tokens
-│   ├── schemas/                  # Pydantic schemas (all updated/new)
-│   ├── services/                 # Business logic (all updated/new)
+│   ├── schemas/                  # Pydantic schemas
+│   ├── services/                 # Business logic
 │   └── main.py                   # FastAPI app
 ├── alembic/                      # Migrations
 ├── scripts/                      # Helper scripts
-│   ├── seed_data.py              # Database seeding (NEW)
-│   └── validate_rbac.py          # Validation script (NEW)
-├── QUICK_START.md                # Quick start guide (NEW)
-├── MIGRATION_GUIDE.md            # Migration instructions (NEW)
-├── RBAC_IMPLEMENTATION.md        # Implementation details (NEW)
-├── PERMISSION_GUIDE.md           # Permission guide (NEW)
+│   ├── seed_data.py              # Database seeding
+│   └── validate_rbac.py          # Validation script
+├── QUICK_START.md                # Quick start guide
 ├── requirements.txt
 ├── Dockerfile
 └── docker-compose.yml
@@ -100,24 +66,28 @@ auth-base-api/
 
 ### 1. Prerequisites
 - Python 3.8+
-- PostgreSQL/MySQL/SQLite
-- Virtual environment
+- SQLite, MySQL, or PostgreSQL
+- Virtual environment tool (`venv`)
 
 ### 2. Install Dependencies
 ```bash
-python -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\Activate.ps1
+python -m venv venv
+# Windows:
+.\venv\Scripts\Activate.ps1
+# macOS/Linux:
+source venv/bin/activate
+
 pip install -r requirements.txt
 ```
 
 ### 3. Configure Environment
-Create `.env` file:
+Create a `.env` file at the root of the project:
 ```env
-DB_TYPE=postgres
-POSTGRES_DB_URL=postgresql://user:pass@localhost:5432/dbname
+DB_TYPE=sqlite
 SECRET_KEY=your-secret-key-here
 ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=60
+REFRESH_TOKEN_EXPIRE_DAYS=7
 
 # SMTP for password reset
 SMTP_SERVER=smtp.example.com
@@ -129,248 +99,97 @@ SMTP_USE_TLS=true
 ```
 
 ### 4. Database Migration
-
-⚠️ **IMPORTANT: Drop all existing tables first!**
-
 ```bash
-# Initialize Alembic (if not done)
-alembic init alembic
-
-# Update alembic/env.py (see MIGRATION_GUIDE.md)
-
-# Create migration
-alembic revision --autogenerate -m "Initial RBAC schema"
-
-# Apply migration
 alembic upgrade head
 ```
 
 ### 5. Seed Initial Data
 ```bash
-python seed_data.py
+python scripts/seed_data.py
+```
+This generates default roles (`admin`, `user`), default actions (`create`, `read`, `update`, `delete`), default menus (`Dashboard`, `Users`, etc.), permission mappings, and the default admin user:
+- **Email:** `admin@example.com`
+- **Password:** `Admin@1234!`
+
+### 6. Verify System Health
+Run the validation script to check database connections, tables, and seeded configurations:
+```bash
+python scripts/validate_rbac.py
 ```
 
-This creates:
-- Default roles (admin, user, manager)
-- Default actions (create, read, update, delete, export, import)
-- Default menus (Dashboard, Users, Roles, Menus, Permissions, Audit Logs, Settings)
-- Admin user (email: admin@example.com, password: admin123)
-- Default permissions
-
-### 6. Run the Application
+### 7. Run the Application
 ```bash
 uvicorn app.main:app --reload
 ```
-
-Visit:
-- **Swagger UI:** http://localhost:8000/docs
-- **ReDoc:** http://localhost:8000/redoc
+- **Interactive Swagger Documentation:** [http://localhost:8000/docs](http://localhost:8000/docs)
+- **ReDoc API Documentation:** [http://localhost:8000/redoc](http://localhost:8000/redoc)
 
 ---
 
-## 📡 API Endpoints
+## 📡 API Endpoint Reference
 
 ### Authentication (`/auth`)
-- `POST /auth/register` - Register new user (requires: email, password, name)
-- `POST /auth/login` - Login (returns access & refresh tokens)
-- `POST /auth/refresh` - Refresh access token
-- `POST /auth/forgot-password` - Request password reset
-- `POST /auth/reset-password` - Reset password with token
+- `POST /auth/register` - Register a new user.
+- `POST /auth/login` - Login, returning access and refresh JWT tokens.
+- `POST /auth/refresh` - Refresh access token using a refresh token.
+- `POST /auth/forgot-password` - Request a password reset token.
+- `POST /auth/reset-password` - Reset password using the reset token.
 
-### Users (`/users`)
-- `GET /users/me` - Get current user profile
-- `GET /users/` - List all users (admin only)
-- `DELETE /users/{user_id}` - Delete user (admin only)
+### User Management (`/users`)
+- `GET /users/me` - Retrieve current active user profile.
+- `GET /users/` - List all users (Admin only).
+- `DELETE /users/{user_id}` - Delete user (Admin only).
 
-### Roles (`/roles`) 🆕
-- `POST /roles/` - Create new role
-- `GET /roles/` - List all roles
-- `GET /roles/{role_id}` - Get specific role
-- `PUT /roles/{role_id}` - Update role
-- `DELETE /roles/{role_id}` - Delete role
+### Role Management (`/roles`)
+- `POST /roles/` - Create a new role.
+- `GET /roles/` - List all roles.
+- `GET /roles/{role_id}` - Get a specific role.
+- `PUT /roles/{role_id}` - Update a role.
+- `DELETE /roles/{role_id}` - Delete a role.
 
-### Menus (`/menus`) 🆕
-- `POST /menus/` - Create new menu
-- `GET /menus/` - List all menus
-- `GET /menus/{menu_id}` - Get specific menu
-- `GET /menus/active/list` - Get active menus only
-- `PUT /menus/{menu_id}` - Update menu
-- `DELETE /menus/{menu_id}` - Delete menu
+### Menu Management (`/menus`)
+- `POST /menus/` - Create a new menu.
+- `GET /menus/` - List all menus.
+- `GET /menus/{menu_id}` - Get a specific menu.
+- `GET /menus/active/list` - Get active menus only (ordered by `sort_order`).
+- `PUT /menus/{menu_id}` - Update a menu.
+- `DELETE /menus/{menu_id}` - Delete a menu.
 
-### Actions (`/actions`) 🆕
-- `POST /actions/` - Create new action
-- `GET /actions/` - List all actions
-- `GET /actions/{action_id}` - Get specific action
-- `PUT /actions/{action_id}` - Update action
-- `DELETE /actions/{action_id}` - Delete action
+### Action Management (`/actions`)
+- `POST /actions/` - Create a new action.
+- `GET /actions/` - List all actions.
+- `GET /actions/{action_id}` - Get a specific action.
+- `PUT /actions/{action_id}` - Update an action.
+- `DELETE /actions/{action_id}` - Delete an action.
 
-### Role Permissions (`/role-permissions`) 🆕
-- `POST /role-permissions/` - Create single permission
-- `POST /role-permissions/bulk` - Create multiple permissions
-- `GET /role-permissions/{permission_id}` - Get specific permission
-- `GET /role-permissions/role/{role_id}` - Get all permissions for a role
-- `GET /role-permissions/menu/{menu_id}` - Get all permissions for a menu
-- `DELETE /role-permissions/{permission_id}` - Delete permission
-- `DELETE /role-permissions/role/{role_id}` - Delete all permissions for a role
+### Role Permission Mapping (`/role-permissions`)
+- `POST /role-permissions/` - Map single permission grant.
+- `POST /role-permissions/bulk` - Map multiple permissions in a single call.
+- `GET /role-permissions/{permission_id}` - Get specific permission grant details.
+- `GET /role-permissions/role/{role_id}` - Get all permission mapping rules for a role.
+- `GET /role-permissions/menu/{menu_id}` - Get all permission mapping rules for a menu.
+- `DELETE /role-permissions/{permission_id}` - Revoke permission mapping.
 
-### Audit Logs (`/audit-logs`) 🆕
-- `POST /audit-logs/` - Create audit log entry
-- `GET /audit-logs/` - List all audit logs
-- `GET /audit-logs/{log_id}` - Get specific log
-- `GET /audit-logs/user/{user_id}` - Get logs by user
-- `GET /audit-logs/module/{module}` - Get logs by module
-- `GET /audit-logs/date-range/` - Get logs by date range
-
----
-
-## 🔐 Permission System
-
-The RBAC system uses a three-dimensional permission model:
-
-**Permission = Role × Menu × Action**
-
-### Example: Protecting a Route
-```python
-from fastapi import APIRouter, Depends
-from app.api.deps import require_permission
-
-router = APIRouter()
-
-@router.post("/users/")
-def create_user(
-    user_data: UserCreate,
-    db: Session = Depends(get_db),
-    _ = Depends(require_permission(menu_id=2, action_id=1))
-):
-    # Only users with CREATE permission on USERS menu can access
-    # menu_id=2 (Users menu), action_id=1 (Create action)
-    return create_user_logic(db, user_data)
-```
-
-See **[docs/PERMISSION_GUIDE.md](docs/PERMISSION_GUIDE.md)** for complete usage guide.
-
----
-
-## 🔄 Breaking Changes
-
-### User Registration
-**Before:**
-```json
-{
-  "email": "user@example.com",
-  "password": "password123"
-}
-```
-
-**After:**
-```json
-{
-  "email": "user@example.com",
-  "password": "password123",
-  "name": "John Doe",
-  "phone": "+1234567890",
-  "address": "123 Main St"
-}
-```
-
-### Role Field Name
-- `role.name` → `role.role_name`
-
-### User Response
-Now includes: `name`, `phone`, `address`, `status`, `created_at`, `updated_at`
+### Audit Logs (`/audit-logs`)
+- `POST /audit-logs/` - Create audit log entry.
+- `GET /audit-logs/` - List all audit logs (supports pagination, user filtering, and module filtering).
+- `GET /audit-logs/{log_id}` - Get specific audit log entry.
+- `GET /audit-logs/user/{user_id}` - Get audit logs generated by a specific user.
+- `GET /audit-logs/module/{module}` - Get audit logs for a specific module.
+- `GET /audit-logs/date-range/` - Retrieve logs within a start and end datetime range.
 
 ---
 
 ## 🧪 Running Tests
 
+Execute the test suite with:
 ```bash
 pytest tests/ -v
 ```
 
 ---
 
-## 🛠️ Tech Stack
-
-- **FastAPI** - Modern web framework
-- **SQLAlchemy** - ORM
-- **Alembic** - Database migrations
-- **Pydantic** - Data validation
-- **Python-JOSE** - JWT handling
-- **SlowAPI** - Rate limiting
-- **PostgreSQL/MySQL/SQLite** - Database
-
----
-
-## 📊 Default Data (After Seeding)
-
-### Roles
-- **admin** - Full access to all features
-- **user** - Limited access (read-only dashboard)
-- **manager** - Team management access
-
-### Actions
-- create, read, update, delete, export, import
-
-### Menus
-- Dashboard, Users, Roles, Menus, Permissions, Audit Logs, Settings
-
-### Default Admin
-- **Email:** admin@example.com
-- **Password:** admin123
-- ⚠️ **Change this immediately in production!**
-
----
-
 ## 🔒 Security Notes
-
-Before production:
-1. ✅ Change default admin password
-2. ✅ Set secure `SECRET_KEY`
-3. ✅ Use HTTPS
-4. ✅ Enable rate limiting
-5. ✅ Configure CORS properly
-6. ✅ Set up database backups
-7. ✅ Review permission assignments
-8. ✅ Enable security headers
-
----
-
-## 📖 Documentation
-
-For complete documentation, see the **[docs/](docs/)** folder:
-- **[Quick Start Guide](docs/QUICK_START.md)** - Get started in 10 minutes
-- **[Migration Guide](docs/MIGRATION_GUIDE.md)** - Complete migration instructions
-- **[Permission Guide](docs/PERMISSION_GUIDE.md)** - Permission system reference
-- **[Architecture](docs/ARCHITECTURE.md)** - System architecture diagrams
-- **[Full Documentation Index](docs/README.md)** - Complete documentation index
-
----
-
-## 🤝 Contributing
-
-This is a template project for learning and small projects. Feel free to fork and customize for your needs.
-
----
-
-## 📝 License
-
-MIT License - Feel free to use this template for your projects.
-
----
-
-## 🎉 What's New in RBAC Edition
-
-- ✅ Complete RBAC implementation
-- ✅ Hierarchical menu system
-- ✅ Granular permission control
-- ✅ Comprehensive audit logging
-- ✅ Enhanced user management
-- ✅ Bulk permission operations
-- ✅ User status tracking
-- ✅ Complete documentation
-- ✅ Seed data script
-- ✅ Validation tools
-
----
-
-**Ready to get started?** Jump straight to **[docs/QUICK_START.md](docs/QUICK_START.md)**!
+1. Change default admin password after first login.
+2. Use strong, randomly generated keys for `SECRET_KEY`.
+3. In production, configure CORS settings and enforce TLS (HTTPS).
