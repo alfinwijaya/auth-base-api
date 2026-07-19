@@ -10,7 +10,7 @@ class UserService:
 
     @staticmethod
     def delete_user(db: Session, user_id: int):
-        user = db.query(User).get(user_id)
+        user = db.get(User, user_id)
 
         if not user:
             raise HTTPException(404, "User not found")

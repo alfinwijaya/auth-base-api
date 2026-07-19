@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional
 from datetime import datetime
 
@@ -15,8 +15,7 @@ class ActionUpdate(BaseModel):
     description: Optional[str] = Field(None, max_length=255)
 
 class ActionResponse(ActionBase):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     created_at: datetime
-
-    class Config:
-        from_attributes = True

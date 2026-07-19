@@ -83,8 +83,8 @@ auth-base-api/
 │   └── main.py                   # FastAPI app
 ├── alembic/                      # Migrations
 ├── scripts/                      # Helper scripts
-├── seed_data.py                  # Database seeding (NEW)
-├── validate_rbac.py              # Validation script (NEW)
+│   ├── seed_data.py              # Database seeding (NEW)
+│   └── validate_rbac.py          # Validation script (NEW)
 ├── QUICK_START.md                # Quick start guide (NEW)
 ├── MIGRATION_GUIDE.md            # Migration instructions (NEW)
 ├── RBAC_IMPLEMENTATION.md        # Implementation details (NEW)

@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, ConfigDict
 from typing import Optional
 from datetime import datetime
 from enum import Enum
@@ -34,6 +34,8 @@ class UserUpdate(BaseModel):
     status: Optional[UserStatusEnum] = None
 
 class UserOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     email: str
     name: str
@@ -43,6 +45,3 @@ class UserOut(BaseModel):
     status: str
     created_at: datetime
     updated_at: datetime
-
-    class Config:
-        from_attributes = True

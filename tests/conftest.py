@@ -57,7 +57,7 @@ def engine():
 # ---------------------------------------------------------------------------
 
 @pytest.fixture()
-def db(engine) -> Session:
+def db(engine) -> Session: # type: ignore
     """
     Yield a SQLAlchemy session bound to the in-memory engine.
 

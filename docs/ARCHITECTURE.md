@@ -1,459 +1,145 @@
-# RBAC System Architecture
+# AuthBase API - Architecture & Permission Guide
 
-## System Overview
+This document describes the system architecture, database schema, permission engine, and integration guidelines for the Role-Based Access Control (RBAC) implementation.
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                         RBAC System                             │
-│                                                                 │
-│  ┌──────────┐    ┌──────────┐    ┌──────────┐    ┌──────────┐   │
-│  │  Users   │───▶│  Roles   │───▶│   Role   │───▶│  Menus   │   │
-│  │          │    │          │    │Permission│    │          │   │
-│  └──────────┘    └──────────┘    └──────────┘    └──────────┘   │
-│       │               │                │                │       │
-│       │               │                │                │       │
-│       ▼               │                ▼                │       │
-│  ┌──────────┐         │          ┌──────────┐           │       │
-│  │  Audit   │         │          │ Actions  │           │       │
-│  │   Logs   │         │          │          │           │       │
-│  └──────────┘         │          └──────────┘           │       │
-│                       │                                 │       │
-│                       └─────────────────────────────────┘       │
-└─────────────────────────────────────────────────────────────────┘
-```
+---
 
-## Database Schema
+## 1. System Overview
 
-```
-┌─────────────────┐
-│     roles       │
-├─────────────────┤
-│ id (PK)         │
-│ role_name       │◀────────┐
-│ description     │         │
-│ created_at      │         │
-│ updated_at      │         │
-└─────────────────┘         │
-                            │
-┌─────────────────┐         │
-│     users       │         │
-├─────────────────┤         │
-│ id (PK)         │         │
-│ role_id (FK)    │─────────┘
-│ name            │
-│ email           │
-│ password        │
-│ phone           │
-│ address         │
-│ status          │
-│ created_at      │
-│ updated_at      │
-└─────────────────┘
-        │
-        │
-        ▼
-┌─────────────────┐
-│   audit_logs    │
-├─────────────────┤
-│ id (PK)         │
-│ user_id (FK)    │
-│ module          │
-│ activity        │
-│ ip_address      │
-│ user_agent      │
-│ created_at      │
-└─────────────────┘
+The authorization model relies on a five-layer security hierarchy resolving user requests.
 
-┌─────────────────┐
-│     menus       │
-├─────────────────┤
-│ id (PK)         │◀────────┐
-│ parent_id (FK)  │─────────┘
-│ menu_name       │
-│ menu_slug       │
-│ menu_url        │
-│ icon            │
-│ sort_order      │
-│ is_active       │
-│ created_at      │
-│ updated_at      │
-└─────────────────┘
-        │
-        │
-        ▼
-┌─────────────────┐
-│    actions      │
-├─────────────────┤
-│ id (PK)         │
-│ action_name     │
-│ description     │
-│ created_at      │
-└─────────────────┘
-        │
-        │
-        ▼
-┌─────────────────┐
-│role_permissions │
-├─────────────────┤
-│ id (PK)         │
-│ role_id (FK)    │───┐
-│ menu_id (FK)    │───┼───▶ Permission = Role × Menu × Action
-│ action_id (FK)  │───┘
-│ created_at      │
-└─────────────────┘
+### Entity Relationships
+
+To illustrate the relationship flow without messy ASCII blocks, the structure uses Markdown Mermaid diagrams.
+
+```mermaid
+graph TD
+    User[Users] -->|has one| Role[Roles]
+    Role -->|has many| Permission[Role Permissions]
+    Permission -->|references| Menu[Menus]
+    Permission -->|references| Action[Actions]
+    User -->|generates| Audit[Audit Logs]
 ```
 
-## Permission Flow
+Each permission grant dynamically associates a **Role** to a specific **Action** on a target **Menu** (e.g. `admin` role can perform the `create` action on the `Users` menu). Additionally, state changes produce immutable logs in the `Audit Logs` system for compliance tracking.
 
-```
-┌──────────┐
-│  User    │
-│ Logs In  │
-└────┬─────┘
-     │
-     ▼
-┌──────────────────┐
-│ Get User's Role  │
-└────┬─────────────┘
-     │
-     ▼
-┌────────────────────────┐
-│ Fetch Role Permissions │
-│ (Role × Menu × Action) │
-└────┬───────────────────┘
-     │
-     ▼
-┌──────────────────────┐
-│ User Accesses Route  │
-└────┬─────────────────┘
-     │
-     ▼
-┌────────────────────────┐
-│ Check Permission       │
-│ require_permission(    │
-│   menu_id=2,           │
-│   action_id=1          │
-│ )                      │
-└────┬───────────────────┘
-     │
-     ├─── Has Permission ──▶ ✅ Allow Access
-     │
-     └─── No Permission ───▶ ❌ 403 Forbidden
-```
+---
 
-## API Architecture
+## 2. Database Schema
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                      FastAPI Application                    │
-├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│  ┌──────────────────────────────────────────────────────┐   │
-│  │                    API Routes                        │   │
-│  ├──────────────────────────────────────────────────────┤   │
-│  │ /auth          │ Authentication & Registration       │   │
-│  │ /users         │ User Management                     │   |
-│  │ /roles         │ Role Management                     │   │
-│  │ /menus         │ Menu Management                     │   │
-│  │ /actions       │ Action Management                   │   │
-│  │ /role-permissions │ Permission Management            │   │
-│  │ /audit-logs    │ Audit Log Queries                   │   │
-│  └──────────────────────────────────────────────────────┘   │
-│                           │                                 │
-│                           ▼                                 │
-│  ┌──────────────────────────────────────────────────────┐   │
-│  │                  Dependencies                        │   │
-│  ├──────────────────────────────────────────────────────┤   │
-│  │ get_db()            │ Database Session               │   │
-│  │ get_current_user()  │ JWT Authentication             │   │
-│  │ require_role()      │ Role-Based Check               │   │
-│  │ require_permission()│ Permission Check               │   │
-│  └──────────────────────────────────────────────────────┘   │
-│                           │                                 │
-│                           ▼                                 │
-│  ┌──────────────────────────────────────────────────────┐   │
-│  │                    Services                          │   │
-│  ├──────────────────────────────────────────────────────┤   │
-│  │ AuthService        │ Authentication Logic            │   │
-│  │ UserService        │ User Operations                 │   │
-│  │ RoleService        │ Role Operations                 │   │
-│  │ MenuService        │ Menu Operations                 │   │
-│  │ ActionService      │ Action Operations               │   │
-│  │ RolePermissionService │ Permission Operations        │   │
-│  │ AuditLogService    │ Audit Log Operations            │   │
-│  └──────────────────────────────────────────────────────┘   │
-│                           │                                 │
-│                           ▼                                 │
-│  ┌──────────────────────────────────────────────────────┐   │
-│  │                     Models                           │   │
-│  ├──────────────────────────────────────────────────────┤   │
-│  │ User, Role, Menu, Action, RolePermission, AuditLog   │   │
-│  └──────────────────────────────────────────────────────┘   │
-│                           │                                 │
-│                           ▼                                 │
-│  ┌──────────────────────────────────────────────────────┐   │
-│  │                    Database                          │   │
-│  │              PostgreSQL / MySQL / SQLite             │   │
-│  └──────────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────┘
+The system uses seven tables to persist user identities, authorization configurations, and system access history.
+
+### Table Schema Definition
+
+* **`roles`:** `id` (PK), `role_name` (Unique), `description`, `created_at`, `updated_at`.
+* **`users`:** `id` (PK), `role_id` (FK), `name`, `email` (Unique), `password`, `phone`, `address`, `status`, `created_at`, `updated_at`.
+* **`audit_logs`:** `id` (PK), `user_id` (FK), `module`, `activity`, `ip_address`, `user_agent`, `created_at`.
+* **`menus`:** `id` (PK), `parent_id` (FK, Nullable), `menu_name`, `menu_slug` (Unique), `menu_url`, `icon`, `sort_order`, `is_active`, `created_at`, `updated_at`.
+* **`actions`:** `id` (PK), `action_name` (Unique), `description`, `created_at`.
+* **`role_permissions`:** `id` (PK), `role_id` (FK), `menu_id` (FK), `action_id` (FK), `created_at`.
+
+### Entity Relationship Details
+* **Roles (1 to N) Users:** A user has one role.
+* **Roles (1 to N) RolePermissions:** A role maps to multiple permission grants.
+* **Menus (1 to N) RolePermissions:** A menu maps to multiple permission grants.
+* **Actions (1 to N) RolePermissions:** An action maps to multiple permission grants.
+* **Menus (Self-referential 1 to N):** A menu can contain child submenus (hierarchical tree).
+* **Users (1 to N) AuditLogs:** A user generates log history.
+
+---
+
+## 3. Permission Engine
+
+Permissions resolve dynamically against a 3D intersection mapping a User's assigned Role to a specific Menu and Action.
+
+### Evaluation Lifecycle
+
+```mermaid
+sequenceDiagram
+    autonumber
+    Client->>API Router: Request Endpoint (Headers: Auth Token)
+    API Router->>Dependencies: Decode JWT & Fetch User
+    Dependencies->>Database: Get User Status & Role
+    Database-->>Dependencies: User Active, Role Found
+    Dependencies->>Permission Service: Verify (Role ID, Menu ID, Action ID)
+    Permission Service->>Database: Lookup in role_permissions Table
+    Database-->>Permission Service: Match Found / Not Found
+    alt Authorized (Match Found)
+        Permission Service-->>API Router: Allow Access
+        API Router-->>Client: HTTP 200 OK (Data Response)
+    else Unauthorized (No Match)
+        Permission Service-->>API Router: Raise 403 Forbidden
+        API Router-->>Client: HTTP 403 Forbidden (Permission Denied)
+    end
 ```
 
-## Request Flow Example
+---
 
-```
-1. User Login
-   ┌──────────────────────────────────────────────────┐
-   │ POST /auth/login                                 │
-   │ Body: { email, password }                        │
-   └────┬─────────────────────────────────────────────┘
-        │
-        ▼
-   ┌──────────────────────────────────────────────────┐
-   │ AuthService.login_user()                         │
-   │ - Verify credentials                             │
-   │ - Generate JWT tokens                            │
-   └────┬─────────────────────────────────────────────┘
-        │
-        ▼
-   ┌──────────────────────────────────────────────────┐
-   │ Return: { access_token, refresh_token }          │
-   └──────────────────────────────────────────────────┘
+## 4. Developer Reference: Implementing Access Controls
 
-2. Protected Request
-   ┌──────────────────────────────────────────────────┐
-   │ POST /users/                                     │
-   │ Headers: Authorization: Bearer <token>           │
-   │ Dependencies: require_permission(2, 1)           │
-   └────┬─────────────────────────────────────────────┘
-        │
-        ▼
-   ┌──────────────────────────────────────────────────┐
-   │ get_current_user()                               │
-   │ - Decode JWT                                     │
-   │ - Fetch user from DB                             │
-   └────┬─────────────────────────────────────────────┘
-        │
-        ▼
-   ┌──────────────────────────────────────────────────┐
-   │ require_permission(menu_id=2, action_id=1)       │
-   │ - Check role_permissions table                   │
-   │ - Verify: role_id + menu_id + action_id exists   │
-   └────┬─────────────────────────────────────────────┘
-        │
-        ├─── Permission Granted ──▶ Execute Handler
-        │
-        └─── Permission Denied ───▶ 403 Forbidden
+### 4.1 Route Decoration (FastAPI Dependency)
+Decorate routes using the `require_permission` dependency. This checks if the authenticated user's role has a grant mapping the specified `menu_id` and `action_id`.
+
+```python
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
+from app.api.deps import get_db, require_permission
+
+router = APIRouter()
+
+@router.post("/items", dependencies=[Depends(require_permission(menu_id=2, action_id=1))])
+def create_item(db: Session = Depends(get_db)):
+    # Handled only if the user has action_id=1 (Create) on menu_id=2 (Users/Items)
+    return {"status": "created"}
 ```
 
-## Data Flow
+Alternatively, restrict endpoints strictly using role verification when menu-action logic is too granular:
+```python
+from app.api.deps import require_role
 
-```
-┌─────────────┐
-│   Client    │
-└──────┬──────┘
-       │
-       │ HTTP Request
-       │
-       ▼
-┌─────────────┐
-│  FastAPI    │
-│   Router    │
-└──────┬──────┘
-       │
-       │ Route Handler
-       │
-       ▼
-┌─────────────┐
-│ Dependencies│
-│  - Auth     │
-│  - Perms    │
-└──────┬──────┘
-       │
-       │ Validated Request
-       │
-       ▼
-┌─────────────┐
-│  Service    │
-│   Layer     │
-└──────┬──────┘
-       │
-       │ Business Logic
-       │
-       ▼
-┌─────────────┐
-│   Model     │
-│   Layer     │
-└──────┬──────┘
-       │
-       │ SQL Query
-       │
-       ▼
-┌─────────────┐
-│  Database   │
-└──────┬──────┘
-       │
-       │ Result
-       │
-       ▼
-┌─────────────┐
-│  Response   │
-│   (JSON)    │
-└──────┬──────┘
-       │
-       ▼
-┌─────────────┐
-│   Client    │
-└─────────────┘
+@router.get("/admin-only")
+def get_system_metrics(_ = Depends(require_role("admin"))):
+    return {"metrics": "system"}
 ```
 
-## Permission Matrix Example
+### 4.2 Dynamic Permission Checking
+Execute manual checks inside services or utilities using the `RolePermissionService`:
 
-```
-Role: Editor
-┌──────────────┬────────┬──────┬────────┬────────┬────────┬────────┐
-│ Menu         │ Create │ Read │ Update │ Delete │ Export │ Import │
-├──────────────┼────────┼──────┼────────┼────────┼────────┼────────┤
-│ Dashboard    │   ❌   │  ✅  │   ❌   │   ❌   │   ❌  │   ❌   │
-│ Users        │   ❌   │  ✅  │   ✅   │   ❌   │   ❌  │   ❌   │
-│ Roles        │   ❌   │  ✅  │   ❌   │   ❌   │   ❌  │   ❌   │
-│ Menus        │   ❌   │  ✅  │   ❌   │   ❌   │   ❌  │   ❌   │
-│ Permissions  │   ❌   │  ✅  │   ❌   │   ❌   │   ❌  │   ❌   │
-│ Audit Logs   │   ❌   │  ✅  │   ❌   │   ❌   │   ✅  │   ❌   │
-│ Settings     │   ❌   │  ✅  │   ✅   │   ❌   │   ❌  │   ❌   │
-└──────────────┴────────┴──────┴────────┴────────┴────────┴────────┘
+```python
+from app.services.role_permission_service import RolePermissionService
 
-Role: Admin
-┌──────────────┬────────┬──────┬────────┬────────┬────────┬────────┐
-│ Menu         │ Create │ Read │ Update │ Delete │ Export │ Import │
-├──────────────┼────────┼──────┼────────┼────────┼────────┼────────┤
-│ Dashboard    │   ✅   │  ✅  │   ✅   │   ✅   │   ✅  │   ✅   │
-│ Users        │   ✅   │  ✅  │   ✅   │   ✅   │   ✅  │   ✅   │
-│ Roles        │   ✅   │  ✅  │   ✅   │   ✅   │   ✅  │   ✅   │
-│ Menus        │   ✅   │  ✅  │   ✅   │   ✅   │   ✅  │   ✅   │
-│ Permissions  │   ✅   │  ✅  │   ✅   │   ✅   │   ✅  │   ✅   │
-│ Audit Logs   │   ✅   │  ✅  │   ✅   │   ✅   │   ✅  │   ✅   │
-│ Settings     │   ✅   │  ✅  │   ✅   │   ✅   │   ✅  │   ✅   │
-└──────────────┴────────┴──────┴────────┴────────┴────────┴────────┘
+def process_transaction(db: Session, current_user: User):
+    has_perm = RolePermissionService.check_permission(
+        db,
+        role_id=current_user.role_id,
+        menu_id=7,  # e.g., Settings menu
+        action_id=3  # e.g., Update action
+    )
+    if not has_perm:
+        raise HTTPException(status_code=403, detail="Unauthorized transaction attempt")
 ```
 
-## Hierarchical Menu Structure
+### 4.3 Frontend Integration Flow
+Clients should query permissions on login to shape UI rendering:
+1. Authenticate user to receive JWT.
+2. Request permissions for the user's role: `GET /role-permissions/role/{role_id}`.
+3. Map the permissions in state (`{ menu_id, action_id }`).
+4. Toggle visibility of buttons or panels based on mapping presence:
+   ```javascript
+   function canPerform(menuId, actionId) {
+     return permissions.some(p => p.menu_id === menuId && p.action_id === actionId);
+   }
 
-```
-Dashboard (id: 1)
-│
-Users (id: 2)
-│
-Roles (id: 3)
-│
-Menus (id: 4)
-│
-Permissions (id: 5)
-│
-Audit Logs (id: 6)
-│
-Settings (id: 7)
-├── Profile Settings (parent_id: 7)
-├── System Settings (parent_id: 7)
-│   ├── Email Settings (parent_id: 8)
-│   └── Security Settings (parent_id: 8)
-└── Appearance (parent_id: 7)
-```
+   // Render logic:
+   {canPerform(2, 1) && <button onClick={handleCreate}>Create User</button>}
+   ```
 
-## Audit Log Flow
+---
 
-```
-┌─────────────────┐
-│  User Action    │
-│  (Any CRUD)     │
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│ Create AuditLog │
-│ - user_id       │
-│ - module        │
-│ - activity      │
-│ - ip_address    │
-│ - user_agent    │
-│ - timestamp     │
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│ Store in DB     │
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│ Query Logs      │
-│ - By user       │
-│ - By module     │
-│ - By date range │
-└─────────────────┘
-```
+## 5. Security & Verification Layers
 
-## Security Layers
-
-```
-┌─────────────────────────────────────────────────────────┐
-│                    Security Layers                      │
-├─────────────────────────────────────────────────────────┤
-│                                                         │
-│  Layer 1: Authentication (JWT)                          │
-│  ├─ Valid token required                                │
-│  ├─ Token expiration check                              │
-│  └─ User existence verification                         │
-│                                                         │
-│  Layer 2: Role-Based Access                             │
-│  ├─ User must have valid role                           │
-│  └─ Role must be active                                 │
-│                                                         │
-│  Layer 3: Permission-Based Access                       │
-│  ├─ Check role_permissions table                        │
-│  ├─ Verify: role_id + menu_id + action_id               │
-│  └─ Grant/Deny access                                   │
-│                                                         │
-│  Layer 4: User Status Check                             │
-│  ├─ User must be "active"                               │
-│  └─ Suspended/Inactive users denied                     │
-│                                                         │
-│  Layer 5: Audit Logging                                 │
-│  ├─ Log all actions                                     │
-│  ├─ Track IP and user agent                             │
-│  └─ Timestamp all activities                            │
-│                                                         │
-└─────────────────────────────────────────────────────────┘
-```
-
-## Component Relationships
-
-```
-┌──────────┐
-│   User   │
-└────┬─────┘
-     │ has one
-     ▼
-┌──────────┐
-│   Role   │
-└────┬─────┘
-     │ has many
-     ▼
-┌───────────────┐
-│ RolePermission│
-└────┬──────────┘
-     │ references
-     ├──────────────┐
-     │              │
-     ▼              ▼
-┌──────────┐  ┌──────────┐
-│   Menu   │  │  Action  │
-└──────────┘  └──────────┘
-```
-
-This architecture provides:
-- ✅ Clear separation of concerns
-- ✅ Scalable permission system
-- ✅ Comprehensive audit trail
-- ✅ Flexible role management
-- ✅ Hierarchical menu structure
-- ✅ Multiple security layers
+1. **Authentication (JWT Layer):** Decodes Bearer token, validates signature, ensures expiration time is valid, and retrieves user record.
+2. **Status Check:** Explicitly checks user state. Suspended or inactive users are rejected immediately with `HTTP 401`.
+3. **Role Validation:** Enforces correct active role assignment on requested actions.
+4. **Action Authorization:** Inspects the matrix (`role_permissions` mapping).
+5. **Audit Trail Logging:** All state changes produce an entry in `audit_logs` capturing user identification, module scope, activity description, client IP address, and browser User-Agent.
